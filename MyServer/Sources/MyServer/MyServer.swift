@@ -1,5 +1,7 @@
 import Foundation
 import Vapor
+import Fluent
+import FluentMySQLDriver
 
 @main
 public struct MyServer {
@@ -13,10 +15,13 @@ public struct MyServer {
         webapp.get("positions", use: pdrServer.listPositions)
         webapp.get("runnings", use: pdrServer.listRunnings)
         webapp.get("pdr", use: pdrServer.listPDRresult )
+        // webapp.
         //        webapp.post("echo", use: Self.echo)
+	// try app.run(hostname: "your-public-ip", port: 8080)
+	    webapp.http.server.configuration.hostname = "0.0.0.0"
+        webapp.databases.use(.mysql(hostname: "localhost", username: "vapor", password: "vapor", database: "vapor"), as: .mysql)
         try webapp.run()
     }
-    
 }
 
 struct PDRServer{

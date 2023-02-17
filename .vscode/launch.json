@@ -1,0 +1,40 @@
+{
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug Run (PDRServer)",
+            "program": "${workspaceFolder:codespaces-blank}/PDRServer/.build/debug/Run",
+            "args": [],
+            "cwd": "${workspaceFolder:codespaces-blank}/PDRServer",
+            "preLaunchTask": "swift: Build Debug Run (PDRServer)"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Release Run (PDRServer)",
+            "program": "${workspaceFolder:codespaces-blank}/PDRServer/.build/release/Run",
+            "args": [],
+            "cwd": "${workspaceFolder:codespaces-blank}/PDRServer",
+            "preLaunchTask": "swift: Build Release Run (PDRServer)"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug MyServer (MyServer)",
+            "program": "${workspaceFolder:codespaces-blank}/MyServer/.build/debug/MyServer",
+            "args": [],
+            "cwd": "${workspaceFolder:codespaces-blank}/MyServer",
+            "preLaunchTask": "swift: Build Debug MyServer (MyServer)"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Release MyServer (MyServer)",
+            "program": "${workspaceFolder:codespaces-blank}/MyServer/.build/release/MyServer",
+            "args": [],
+            "cwd": "${workspaceFolder:codespaces-blank}/MyServer",
+            "preLaunchTask": "swift: Build Release MyServer (MyServer)"
+        }
+    ]
+}
