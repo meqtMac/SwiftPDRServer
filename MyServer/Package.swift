@@ -31,9 +31,7 @@ let package = Package(
             ],
             resources: [
                 .copy("position.csv"),
-                .copy("position.json"),
                 .copy("running.csv"),
-                .copy("running.json"),
             ]
         ),
         .testTarget(

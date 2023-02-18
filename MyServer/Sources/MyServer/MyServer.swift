@@ -15,11 +15,8 @@ public struct MyServer {
         webapp.get("positions", use: pdrServer.listPositions)
         webapp.get("runnings", use: pdrServer.listRunnings)
         webapp.get("pdr", use: pdrServer.listPDRresult )
-        // webapp.
-        //        webapp.post("echo", use: Self.echo)
-	// try app.run(hostname: "your-public-ip", port: 8080)
-	    webapp.http.server.configuration.hostname = "0.0.0.0"
-        webapp.databases.use(.mysql(hostname: "localhost", username: "vapor", password: "vapor", database: "vapor"), as: .mysql)
+        webapp.http.server.configuration.hostname = "0.0.0.0"
+        webapp.http.server.configuration.port = 8000
         try webapp.run()
     }
 }
@@ -125,21 +122,21 @@ actor Storage{
     }
     
     func load() throws {
-        guard let positionPath = Bundle.module.path(forResource: "position", ofType: "json") else {
+        guard let positionPath = Bundle.module.path(forResource: "position", ofType: "csv") else {
             throw Errors.FileNotFound
         }
         guard let positionData = FileManager.default.contents(atPath: positionPath) else {
             throw Errors.failedLoading
         }
-        self.positions = try self.jsonDecoder.decode([Model.Position].self, from: positionData)
+        self.positions = try Model.parsePositionCSV(from: String(data: positionData, encoding: .utf8)!)
         
-        guard let runningPath = Bundle.module.path(forResource: "running", ofType: "json") else {
+        guard let runningPath = Bundle.module.path(forResource: "running", ofType: "csv") else {
             throw Errors.FileNotFound
         }
         guard let runningData = FileManager.default.contents(atPath: runningPath) else {
             throw Errors.failedLoading
         }
-        self.runnings = try self.jsonDecoder.decode([Model.Running].self, from: runningData)
+        self.runnings = try Model.parseRunningCSV( from: String(data: runningData, encoding: .utf8)!)
     }
     
     enum Errors: Error {
@@ -175,7 +172,7 @@ enum Model{
     
     // Postion Structure
     struct Position: Identifiable, Hashable, Codable, Content {
-        var id: Int
+        var id: UUID
         var x: Double
         var y: Double
         var z: Double
@@ -187,7 +184,7 @@ enum Model{
     
     // Running Structure
     struct Running: Identifiable, Hashable, Codable, Content {
-        var id: Int
+        var id: UUID
         var accx: Double
         var accy: Double
         var accz: Double
@@ -202,10 +199,10 @@ enum Model{
     
     // PDRStep Structure
     struct PDRStep: Identifiable, Hashable, Codable, Content{
-        init(id: Int, accx: Double, accy: Double, accz: Double,
+        init(accx: Double, accy: Double, accz: Double,
              gyroscopex: Double, gyroscopey: Double, gyroscopez: Double, timestamp: Int,
              x: Double, y: Double, theta: Double) {
-            self.id = id
+            self.id = UUID()
             self.accx = accx
             self.accy = accy
             self.accz = accz
@@ -219,7 +216,7 @@ enum Model{
             self.theta = theta
         }
         init(running: Model.Running, x: Double, y: Double, theta: Double) {
-            self.id = running.id
+            self.id = UUID()
             self.accx = running.accx
             self.accy = running.accy
             self.accz = running.accz
@@ -232,7 +229,7 @@ enum Model{
             self.y = y
             self.theta = theta
         }
-        var id: Int
+        var id: UUID
         var accx: Double
         var accy: Double
         var accz: Double
@@ -250,7 +247,7 @@ enum Model{
 
 extension Model {
     // position parser
-    func parsePositionCSV(from str: String) throws -> [Position] {
+    static func parsePositionCSV(from str: String) throws -> [Position] {
         let strs = str.split(separator: "\n")
         var positions: [Position] = []
         let dateformer = DateFormatter()
@@ -258,7 +255,7 @@ extension Model {
         
         for line in strs[1..<strs.count] {
             let parts = line.split(separator: ",")
-            let id = Int(parts[0])
+            // let id = Int(parts[0])
             let x = Double(parts[2])
             let y = Double(parts[3])
             let z = Double(parts[4])
@@ -267,7 +264,7 @@ extension Model {
             let sampleTime = dateformer.date(from: String(parts[8]+","+parts[9]) )
             let sampleBatch = Int(parts[10])
             
-            let position = Position(id: id!, x: x!, y: y!, z: z!, stay: stay, timestamp: timeStamp!, sampleTime: sampleTime!, sampleBatch: sampleBatch!)
+            let position = Position(id: UUID(), x: x!, y: y!, z: z!, stay: stay, timestamp: timeStamp!, sampleTime: sampleTime!, sampleBatch: sampleBatch!)
             
             positions.append(position)
         }
@@ -275,7 +272,7 @@ extension Model {
     }
     
     // running parser
-    func parseRunningCSV(from str: String) throws -> [Running] {
+    static func parseRunningCSV(from str: String) throws -> [Running] {
         let strs = str.split(separator: "\n")
         var runnings: [Running] = []
         let dateformer = DateFormatter()
@@ -283,7 +280,7 @@ extension Model {
         
         for line in strs[1..<strs.count] {
             let parts = line.split(separator: ",")
-            let id = Int(parts[0])
+            // let id = Int(parts[0])
             let accx = Double(parts[8])
             let accy = Double(parts[9])
             let accz = Double(parts[10])
@@ -295,7 +292,7 @@ extension Model {
             let timeStamp = Int(parts[17])
             let sampleTime = dateformer.date(from: String(parts[19]+","+parts[20]) )
             let sampleBatch = Int(parts[21])
-            let running = Running(id: id!, accx: accx!, accy: accy!, accz: accz!, gyroscopex: gyroscopex!, gyroscopey: gyroscopey!, gyroscopez: gyroscopez!, stay: stay, timestamp: timeStamp!, sampleTime: sampleTime!, sampleBatch: sampleBatch!)
+            let running = Running(id: UUID(), accx: accx!, accy: accy!, accz: accz!, gyroscopex: gyroscopex!, gyroscopey: gyroscopey!, gyroscopez: gyroscopez!, stay: stay, timestamp: timeStamp!, sampleTime: sampleTime!, sampleBatch: sampleBatch!)
             
             runnings.append(running)
         }

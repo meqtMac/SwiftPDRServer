@@ -20,8 +20,8 @@ sudo apt-get install \
 wget https://download.swift.org/swift-5.7.3-release/ubuntu2004/swift-5.7.3-RELEASE/swift-5.7.3-RELEASE-ubuntu20.04.tar.gz
 tar xzf swift-5.7.3-RELEASE-ubuntu20.04.tar.gz
 sudo mv swift-5.7.3-RELEASE-ubuntu20.04/ /usr/share/swift
-echo "export PATH=/usr/share/swift/usr/bin:$PATH" >> ~/.bashrc
-source ~/.bashrc
+echo "export PATH=/usr/share/swift/usr/bin:$PATH" >> ~/.zshrc
+source ~/.zshrc
 
 cd MyServer
 swift build
