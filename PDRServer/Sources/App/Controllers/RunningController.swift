@@ -89,6 +89,7 @@ struct RunningController: RouteCollection {
     }
 
     func create(req: Request) async throws -> [Running] {
+        print(req)
         let runnings = try req.content.decode([Running].self)
         for running in runnings {
             try await running.save(on: req.db)

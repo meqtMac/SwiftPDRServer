@@ -1,3 +1,4 @@
+# install swift Dependency
 sudo apt update
 sudo apt-get install \
           binutils \
@@ -17,12 +18,11 @@ sudo apt-get install \
           uuid-dev \
           zlib1g-dev
 
+# download swift package
 wget https://download.swift.org/swift-5.7.3-release/ubuntu2004/swift-5.7.3-RELEASE/swift-5.7.3-RELEASE-ubuntu20.04.tar.gz
 tar xzf swift-5.7.3-RELEASE-ubuntu20.04.tar.gz
 sudo mv swift-5.7.3-RELEASE-ubuntu20.04/ /usr/share/swift
+
+# add swift to path
 echo "export PATH=/usr/share/swift/usr/bin:$PATH" >> ~/.zshrc
 source ~/.zshrc
-
-cd MyServer
-swift build
-swift run

@@ -14,7 +14,7 @@ public func configure(_ app: Application) throws {
         port: 3306,
         username: "root",
         password: "PfD2BtG3mqk897Y",
-        database: "vapor_database",
+        database: "vapor2_database",
         tlsConfiguration: tls
     ), as: .mysql)
 

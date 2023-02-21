@@ -26,9 +26,9 @@ struct PositionsController: RouteCollection {
 
     func create(req: Request) async throws -> [Position] {
         let positions = try req.content.decode([Position].self)
-        // for position in positions{
-        //     try await position.save(on: req.db)
-        // }
+        for position in positions{
+             try await position.save(on: req.db)
+        }
         return positions
     }
 
