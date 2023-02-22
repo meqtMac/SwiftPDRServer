@@ -1,12 +1,9 @@
 import Fluent
 
 struct CreatePDRDateBase: AsyncMigration {
+    
     func prepare(on database: Database) async throws {
-        // try await database.schema("todos")
-        //     .id()
-        //     .field("title", .string, .required)
-        //     .create()
-
+        // prepare positions schema
         try await database.schema("positions")
             .id()
             .field("x", .double, .required)
@@ -18,6 +15,7 @@ struct CreatePDRDateBase: AsyncMigration {
             .field("sampleBatch", .int, .required)
             .create()
 
+        // prepare runnings schema
         try await database.schema("runnings")
             .id()
             .field("accx", .double, .required)
@@ -31,10 +29,12 @@ struct CreatePDRDateBase: AsyncMigration {
             .field("sampleTime", .datetime, .required)
             .field("sampleBatch", .int, .required)
             .create()
+        
+        try await Position.load(on: database)
+        try await Running.load(on: database)
     }
 
     func revert(on database: Database) async throws {
-        // try await database.schema("todos").delete()
         try await database.schema("runnings").delete()
         try await database.schema("positions").delete()
     }

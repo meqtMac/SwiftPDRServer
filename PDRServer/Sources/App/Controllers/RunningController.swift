@@ -9,7 +9,6 @@ struct RunningController: RouteCollection {
         subroute.post(use: create).description("not yet verified")
         subroute.get("pdr", use: pdr).description("get pdr results with a query of batch")
         subroute.get("train", use: train).description("train k and m")
-        // subroute.get("load", use: load)
         // todos.group(":todoID") { todo in
         //     todo.delete(use: delete)
         // }
@@ -37,26 +36,18 @@ struct RunningController: RouteCollection {
                 .filter(\.$sampleBatch == batch)
                 .sort(\.$timestamp)
                 .all()
-            return PDRStep.pdr(from: runnings, k: k, m: m)
+            let PDREngine = PDREngine(k: k, m: m)
+            
+            return PDREngine.predict(from: runnings)
         }else{
             return []
         }
     }
 
-    // a help function to calculate error of a set with k and m
-    private func calerror(of runningSet: Array<[Running]>, k: Double, m: Double) -> Double {
-        var error = 0.0
-        for runnings in runningSet {
-            error += PDRStep.pdrError(from: runnings, k: k, m: m) 
-        }
-        return error
-    }
-
-    func train(req: Request) async throws -> String {
-        var result = ""
-        if var k: Double = req.query["k"], var m: Double = req.query["m"], let dk: Double = req.query["dk"], let dm: Double = req.query["dm"], let eta: Double = req.query["eta"], let epochs: Int = req.query["epochs"] {
-            result += "k: \(k), m: \(m), dk: \(dk), dm: \(dm), eta: \(eta), epoch: \(epochs), batch: \(27)\n"
-            let batchs = [27]
+    func train(req: Request) async throws -> PDREngine {
+        if let k: Double = req.query["k"], let m: Double = req.query["m"], let dk: Double = req.query["dk"], let dm: Double = req.query["dm"], let eta: Double = req.query["eta"], let epochs: Int = req.query["epochs"] {
+            
+            let batchs = [27, 28, 29]
             var runningSet = Array<[Running]>()
             for batch in batchs {
                 let runnings = try await Running.query(on: req.db)
@@ -66,25 +57,12 @@ struct RunningController: RouteCollection {
                 runningSet.append(runnings)
             }
 
-            var error: Double = calerror(of: runningSet, k: k, m: m)
-            for epoch in 0..<epochs {
-                result += "Epoch: \(epoch), E: \(error), k: \(k), m: \(m)\n"
-                // error with k+dk, m
-                let ek = calerror(of: runningSet, k: k+dk, m: m)
-                // error with k, m+dm
-                let em = calerror(of: runningSet, k: k, m: m+dm)
-
-                // partial e over partial k & m
-                let epk = (ek-error) / dk
-                let epm = (em-error) / dm
-
-                k += -eta * epk
-                m += -eta * epm
-                error = calerror(of: runningSet, k: k, m: m)
-            }
-            return result
+            var pdrEngine = PDREngine(k: k, m: m)
+            pdrEngine.train(runningSet: runningSet, dk: dk, dm: dm, eta: eta, epochs: epochs)
+            
+            return pdrEngine
         }else{
-            return "fail"
+            return PDREngine(k: 0.2, m: 0.05) // Default Engine
         }
     }
 
@@ -96,21 +74,7 @@ struct RunningController: RouteCollection {
         }
         return runnings 
     }
-
-    // func load(req: Request) async throws -> [Running] {
-    //     guard let runningPath = Bundle.module.path(forResource: "running", ofType: "csv") else {
-    //         return []
-    //     }
-    //     guard let runningData = FileManager.default.contents(atPath: runningPath) else{
-    //         return []
-    //     }
-    //     let runnings = try Running.parseRunningCSV(from: String(data: runningData, encoding: .utf8)!)
-    //     for running in runnings {
-    //         try await running.save(on: req.db)
-    //     }
-    //     return runnings
-    // }
-
+    
     // func delete(req: Request) async throws -> HTTPStatus {
     //     guard let todo = try await Todo.find(req.parameters.get("todoID"), on: req.db) else {
     //         throw Abort(.notFound)
