@@ -69,12 +69,21 @@ final class PDREngine: Content{
         
         pdrSteps.append(PDRStep(running: runnings[0], x: x, y: y, theta: theta, error: error))
         
-        for index in 1..<runnings.count-1 {
+        for index in 1..<runnings.count-2 {
             acczMin = min(runnings[index].accz, acczMin)
             acczMax = max(runnings[index].accz, acczMax)
-            theta += runnings[index].gyroscopez * m * Double(runnings[index].timestamp - runnings[index-1].timestamp) / 1000
             
-            if runnings[index].accz > runnings[index-1].accz && runnings[index].accz > runnings[index+1].accz {
+            let ax = runnings[index].accx
+            let ay = runnings[index].accy
+            let az = runnings[index].accz
+            let a = sqrt(ax*ax+ay*ay+az*az)
+            let gx = runnings[index].gyroscopex
+            let gy = runnings[index].gyroscopey
+            let gz = runnings[index].gyroscopez
+
+            theta -=  m * (ax*gx+ay*gy+az*gz)/a * Double(runnings[index].timestamp - runnings[index-1].timestamp) / 1000
+            
+            if  index > 1 && runnings[index].accz > runnings[index-1].accz && runnings[index].accz > runnings[index-2].accz && runnings[index].accz > runnings[index+1].accz && runnings[index].accz > runnings[index+2].accz {
                 
                 let length: Double = k * pow((acczMax-acczMin)*10.0/16384.0, 0.25)
                 y += length * cos(theta * Double.pi/180.0)
@@ -93,9 +102,9 @@ final class PDREngine: Content{
     func train(runningSet: Array<[Running]>, dk: Double, dm: Double, eta: Double, epochs: Int) {
         var error: Double = calerror(of: runningSet)
         
-        for epoch in 0..<epochs {
+        for _ in 0..<epochs {
             error = self.calerror(of: runningSet)
-            print("Epoch: \(epoch), E: \(error), k: \(k), m: \(m)")
+            // print("Epoch: \(epoch), E: \(error), k: \(k), m: \(m)")
             // error with k+dk, m
             let ek = PDREngine(k: k+dk, m: m).calerror(of: runningSet)
             // error with k, m+dm
