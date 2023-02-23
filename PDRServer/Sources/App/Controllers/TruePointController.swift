@@ -16,9 +16,9 @@ struct TruePointController: RouteCollection {
     }
     
     func index(req: Request) async throws -> [TruePoint] {
-        if let magic: Int = req.query["magic"] {
+        if let batch: Int = req.query["batch"] {
             let truePoints = try await TruePoint.query(on: req.db)
-                .filter(\.$magic == magic)
+                .filter(\.$batch == batch )
                 .sort(\.$step)
                 .all()
             return truePoints

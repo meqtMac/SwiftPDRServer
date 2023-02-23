@@ -12,11 +12,23 @@ final class PDREngine: Content{
     var k: Double
     var m: Double
     var ground_true: [TruePoint]
+    var willTrain: Bool
+    var dk: Double?
+    var dm: Double?
+    var eta: Double?
+    var epochs: Int?
+    var testRunnings: [[Running]]?
     
-    init(k: Double, m: Double, ground_Truth: [TruePoint]) {
+    init(k: Double, m: Double, ground_Truth: [TruePoint], willTrain: Bool, dk: Double? = nil, dm: Double? = nil, eta: Double? = nil, epochs: Int? = nil, testRunnings: [[Running]]? = nil) {
         self.k = k
         self.m = m
         self.ground_true = ground_Truth.sorted(by: {$0.step < $1.step})
+        self.willTrain = willTrain
+        self.dk = dk
+        self.dm = dm
+        self.eta = eta
+        self.epochs = epochs
+        self.testRunnings = testRunnings
     }
     
     // error of pdr point
@@ -30,6 +42,7 @@ final class PDREngine: Content{
             realx = ground_true.last!.x
             realy = ground_true.last!.y
         }else{
+            // interpolation
             let index = Int(percent * Double(ground_true.count-1) )
             let  linepercent = (percent - Double(index)/Double(ground_true.count-1) ) / (Double(1)/Double(ground_true.count-1))
             realx = linepercent*ground_true[index+1].x + (1-linepercent)*ground_true[index].x
@@ -52,19 +65,28 @@ final class PDREngine: Content{
     func calerror(of runningSet: Array<[Running]>) -> Double {
         var error = 0.0
         for runnings in runningSet {
-            error += calerror(of: predict(from: runnings))
+            error += calerror(of: pdr(from: runnings))
         }
         return error
     }
     
-    //MARK: PDR algorithms
+    // return pdr result
     func predict(from runnings: [Running]) -> [PDRStep] {
+        if willTrain, let _ = dk, let _ = dm, let _ = eta, let _ = epochs, let _ = testRunnings   {
+            train()
+        }
+        return pdr(from: runnings)
+    }
+    
+    //MARK: PDR algorithms
+    func pdr(from runnings: [Running]) -> [PDRStep] {
         if runnings.count == 0 {
             return []
         }
         
         var pdrSteps: [PDRStep] = []
         
+        // prediction initialization
         var acczMin = runnings[0].accz
         var acczMax = runnings[0].accz
         var x: Double = -1.0
@@ -75,9 +97,11 @@ final class PDREngine: Content{
         pdrSteps.append(PDRStep(running: runnings[0], x: x, y: y, theta: theta, error: error))
         
         for index in 1..<runnings.count-2 {
+            
             acczMin = min(runnings[index].accz, acczMin)
             acczMax = max(runnings[index].accz, acczMax)
             
+            // heading estimate
             let ax = runnings[index].accx
             let ay = runnings[index].accy
             let az = runnings[index].accz
@@ -88,41 +112,50 @@ final class PDREngine: Content{
 
             theta -=  m * (ax*gx+ay*gy+az*gz)/a * Double(runnings[index].timestamp - runnings[index-1].timestamp) / 1000
             
+            // peak detection
             if  index > 1 && runnings[index].accz > runnings[index-1].accz && runnings[index].accz > runnings[index-2].accz && runnings[index].accz > runnings[index+1].accz && runnings[index].accz > runnings[index+2].accz {
                 
+                // step length calculation
                 let length: Double = k * pow((acczMax-acczMin)*10.0/16384.0, 0.25)
                 y += length * cos(theta * Double.pi/180.0)
                 x += length * sin(theta * Double.pi/180.0)
+                
                 // calculate error
                 error = calerror(x: x, y: y, percent: Double(index)/Double(runnings.count-1))
                 
+                // add to prediction result
                 pdrSteps.append(PDRStep(running: runnings[index], x: x, y: y, theta: theta, error: error))
+                
+                // reset max and min z axis acceleration
                 acczMax = runnings[index].accz
                 acczMin = runnings[index].accz
             }
         }
+        
         return pdrSteps
     }
     
-    func train(runningSet: Array<[Running]>, dk: Double, dm: Double, eta: Double, epochs: Int) {
-        var error: Double = calerror(of: runningSet)
+    // train on a dataset with config
+    func train() {
+        var error: Double = calerror(of: testRunnings!)
         
-        for epoch in 0..<epochs {
-            error = self.calerror(of: runningSet)
+        for _ in 0..<epochs! {
+            error = self.calerror(of: testRunnings!)
             // print("Epoch: \(epoch), E: \(error), k: \(k), m: \(m)")
 
             // error with k+dk, m
-            let ek = PDREngine(k: k+dk, m: m,  ground_Truth: ground_true).calerror(of: runningSet)
+            let ek = PDREngine(k: k+dk!, m: m,  ground_Truth: ground_true, willTrain: false).calerror(of: testRunnings!)
 
             // error with k, m+dm
-            let em = PDREngine(k: k, m: m+dm, ground_Truth: ground_true).calerror(of: runningSet)
+            let em = PDREngine(k: k, m: m+dm!, ground_Truth: ground_true, willTrain: false).calerror(of: testRunnings!)
 
             // partial e over partial k & m
-            let epk = (ek-error) / dk
-            let epm = (em-error) / dm
+            let epk = (ek-error) / dk!
+            let epm = (em-error) / dm!
             
-            k += -eta * epk
-            m += -eta * epm
+            // update parameter
+            k += -eta! * epk
+            m += -eta! * epm
         }
     }
 }

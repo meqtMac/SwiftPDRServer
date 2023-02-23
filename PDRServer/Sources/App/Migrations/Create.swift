@@ -3,6 +3,7 @@ import Fluent
 struct CreatePDRDateBase: AsyncMigration {
     
     func prepare(on database: Database) async throws {
+        
         // prepare positions schema
         try await database.schema("positions")
             .id()
@@ -30,15 +31,16 @@ struct CreatePDRDateBase: AsyncMigration {
             .field("sampleBatch", .int, .required)
             .create()
         
+        // prepare truepoints schema
         try await database.schema("truepoints")
             .id()
             .field("x", .double, .required)
             .field("y", .double, .required)
             .field("step", .int, .required)
-            .field("magic", .int, .required)
+            .field("batch", .int, .required)
             .create()
         
-        
+        // load default data
         try await Position.load(on: database)
         try await Running.load(on: database)
         try await TruePoint.load(on: database)
