@@ -6,12 +6,8 @@ struct RunningController: RouteCollection {
     func boot(routes: RoutesBuilder) throws {
         let subroute = routes.grouped("runnings")
         subroute.get(use: index).description("get running dataset with a query of batch")
-        subroute.post(use: create).description("not yet verified")
+        subroute.post(use: create).description("upload runnings dataset")
         subroute.get("pdr", use: pdr).description("get pdr results with a query of batch")
-        // subroute.get("train", use: train).description("train k and m")
-        // todos.group(":todoID") { todo in
-        //     todo.delete(use: delete)
-        // }
     }
     
     func index(req: Request) async throws -> [Running] {
@@ -26,74 +22,6 @@ struct RunningController: RouteCollection {
         }
     }
     
-    func pdr(req: Request) async throws -> [PDRStep] {
-        if let batch: Int = req.query["batch"] {
-            // print("batch: \(batch), k: \(k), m: \(m)")
-            // trained result
-            let k = 0.40
-            let m = 0.08
-            let n = 0.00
-            let dk = 0.01
-            let dm = 0.001
-            let dn = 0.0001
-            let eta = 0.000002
-            let epochs = 200
-            
-            let runnings = try await Running.query(on: req.db)
-                .filter(\.$sampleBatch == batch)
-                .sort(\.$timestamp)
-                .all()
-            
-            var ground_true: [TruePoint] = []
-            if [27, 28, 29, 30, 31, 32].contains(batch) {
-                ground_true = try await TruePoint.query(on: req.db)
-                    .filter(\.$magic == 0)
-                    .sort(\.$step)
-                    .all()
-            }else{
-                 ground_true = try await TruePoint.query(on: req.db)
-                    .filter(\.$magic == 1)
-                    .sort(\.$step)
-                    .all()
-				if ground_true.count == 0 {
-	                ground_true = try await TruePoint.query(on: req.db)
-                    	.filter(\.$magic == 0)
-                    	.sort(\.$step)
-                    	.all()
-				}
-            }
-            
-            let pdrEngine = PDREngine(k: k, m: m, n: n, ground_Truth: ground_true)
-            pdrEngine.train(runningSet: [runnings], dk: dk, dm: dm, dn: dn, eta: eta, epochs: epochs)
-            print("batch:\(batch),k:\(pdrEngine.k),m:\(pdrEngine.m)")
-            return pdrEngine.predict(from: runnings)
-        }else{
-            return []
-        }
-    }
-    
-    // func train(req: Request) async throws -> PDREngine {
-    //     if let k: Double = req.query["k"], let m: Double = req.query["m"], let dk: Double = req.query["dk"], let dm: Double = req.query["dm"], let eta: Double = req.query["eta"], let epochs: Int = req.query["epochs"] {
-    
-    //         let batchs = [29]
-    //         var runningSet = Array<[Running]>()
-    //         for batch in batchs {
-    //             let runnings = try await Running.query(on: req.db)
-    //             .filter(\.$sampleBatch == batch)
-    //             .sort(\.$timestamp)
-    //             .all()
-    //             runningSet.append(runnings)
-    //         }
-    
-    //         let pdrEngine = PDREngine(k: k, m: m)
-    //         pdrEngine.train(runningSet: runningSet, dk: dk, dm: dm, eta: eta, epochs: epochs)
-    
-    //         return pdrEngine
-    //     }else{
-    //         return PDREngine(k: 0.2, m: 0.06) // Default Engine
-    //     }
-    // }
-    
     func create(req: Request) async throws -> [Running] {
         let runnings = try req.content.decode([Running].self)
         for running in runnings {
@@ -102,11 +30,53 @@ struct RunningController: RouteCollection {
         return runnings
     }
     
-    // func delete(req: Request) async throws -> HTTPStatus {
-    //     guard let todo = try await Todo.find(req.parameters.get("todoID"), on: req.db) else {
-    //         throw Abort(.notFound)
-    //     }
-    //     try await todo.delete(on: req.db)
-    //     return .noContent
-    // }
+    func pdr(req: Request) async throws -> [PDRStep] {
+        if let batch: Int = req.query["batch"] {
+            
+            let runnings = try await Running.query(on: req.db)
+                .filter(\.$sampleBatch == batch)
+                .sort(\.$timestamp)
+                .all()
+            // get ground_true
+            var groundTruth: [TruePoint] = try await getGroundTruth(by: batch, on: req.db)
+            
+            let pdrEngine = PDREngine(k: 0.4, m: 0.08, ground_Truth: groundTruth, willTrain: true, dk: 0.01, dm: 0.002, eta: 0.000002, epochs: 200, testRunnings: [runnings])
+            // print("batch:\(batch),k:\(pdrEngine.k),m:\(pdrEngine.m)")
+            return pdrEngine.predict(from: runnings)
+        }else{
+            return []
+        }
+    }
+    
+    // get ground truth
+    private func getGroundTruth(by batch: Int, on database: Database) async throws -> [TruePoint] {
+        
+        var groundTruth: [TruePoint] = []
+        var truthBatch = batch
+        if [27, 28, 29, 30, 31, 32].contains(batch) {
+            // default ground truth
+            truthBatch = 0
+        }
+        
+        groundTruth = try await getGroundTruthHelper(by: truthBatch, on: database)
+        if groundTruth.count == 0 {
+            groundTruth = try await getGroundTruthHelper(by: 1, on: database)
+        }
+        
+        if groundTruth.count == 0 {
+            // default ground truth
+            groundTruth = try await getGroundTruthHelper(by: 0, on: database)
+        }
+        
+        return groundTruth
+    }
+    
+    private func getGroundTruthHelper(by batch: Int, on database: Database) async throws -> [TruePoint] {
+        let groundTruth = try await TruePoint.query(on: database)
+            .filter(\.$batch == batch)
+            .sort(\.$step)
+            .all()
+        return groundTruth
+    }
+    
 }

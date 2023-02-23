@@ -11,17 +11,14 @@ import Vapor
 struct TruePointController: RouteCollection {
     func boot(routes: RoutesBuilder) throws {
         let subroute = routes.grouped("truepoint")
-//        subroute.get(use: index).description("get position dataset with a query of batch")
+        subroute.get(use: index).description("get position dataset with a query of batch")
         subroute.post(use: create).description("upload ground truth")
-        // todos.group(":todoID") { todo in
-        //     todo.delete(use: delete)
-        // }
     }
     
     func index(req: Request) async throws -> [TruePoint] {
-        if let magic: Int = req.query["magic"] {
+        if let batch: Int = req.query["batch"] {
             let truePoints = try await TruePoint.query(on: req.db)
-                .filter(\.$magic == magic)
+                .filter(\.$batch == batch )
                 .sort(\.$step)
                 .all()
             return truePoints
