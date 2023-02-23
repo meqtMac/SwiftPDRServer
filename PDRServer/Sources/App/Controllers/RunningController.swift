@@ -55,7 +55,12 @@ struct RunningController: RouteCollection {
                     .filter(\.$magic == 1)
                     .sort(\.$step)
                     .all()
-
+				if ground_true.count == 0 {
+	                ground_true = try await TruePoint.query(on: req.db)
+                    	.filter(\.$magic == 0)
+                    	.sort(\.$step)
+                    	.all()
+				}
             }
             
             let pdrEngine = PDREngine(k: k, m: m, n: n, ground_Truth: ground_true)

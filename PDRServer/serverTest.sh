@@ -28,7 +28,7 @@ do
     curl "http://localhost:$port/runnings/pdr?batch=$batch" > "$testpath"/"pdr$batch.json"
 done
 
-curl "http://localhost:$port/runnings/train?k=0.4&m=0.08&dk=0.01&dm=0.001&eta=0.000002&epochs=200"
+# curl "http://localhost:$port/runnings/train?k=0.4&m=0.08&dk=0.01&dm=0.001&eta=0.000002&epochs=200"
 
 PID=$(lsof -t -i:$port)
 if [ -z "$PID" ]; then

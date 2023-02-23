@@ -88,7 +88,7 @@ final class PDREngine: Content{
             let gx = runnings[index].gyroscopex
             let gy = runnings[index].gyroscopey
             let gz = runnings[index].gyroscopez
-            
+
             theta -=  m * (ax*gx+ay*gy+az*gz)/a * Double(runnings[index].timestamp - runnings[index-1].timestamp) / 1000
             
             if  index > 1 && runnings[index].accz > runnings[index-1].accz && runnings[index].accz > runnings[index-2].accz && runnings[index].accz > runnings[index+1].accz && runnings[index].accz > runnings[index+2].accz {
@@ -113,6 +113,7 @@ final class PDREngine: Content{
         for _ in 0..<epochs {
             error = self.calerror(of: runningSet)
             print("Epoch: \(epochs), E: \(error), k: \(k), m: \(m), n:\(n)")
+            // print("Epoch: \(epoch), E: \(error), k: \(k), m: \(m)")
             // error with k+dk, m
             let ek = PDREngine(k: k+dk, m: m, n: n, ground_Truth: ground_true).calerror(of: runningSet)
             // error with k, m+dm
