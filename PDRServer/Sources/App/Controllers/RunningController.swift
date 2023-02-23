@@ -32,7 +32,6 @@ struct RunningController: RouteCollection {
             // trained result
             let k = 0.40
             let m = 0.08
-            let n = 0.00
             let dk = 0.01
             let dm = 0.001
             let dn = 0.0001
@@ -63,8 +62,8 @@ struct RunningController: RouteCollection {
 				}
             }
             
-            let pdrEngine = PDREngine(k: k, m: m, n: n, ground_Truth: ground_true)
-            pdrEngine.train(runningSet: [runnings], dk: dk, dm: dm, dn: dn, eta: eta, epochs: epochs)
+            let pdrEngine = PDREngine(k: k, m: m, ground_Truth: ground_true)
+            pdrEngine.train(runningSet: [runnings], dk: dk, dm: dm, eta: eta, epochs: epochs)
             print("batch:\(batch),k:\(pdrEngine.k),m:\(pdrEngine.m)")
             return pdrEngine.predict(from: runnings)
         }else{

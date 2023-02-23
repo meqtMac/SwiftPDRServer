@@ -11,14 +11,12 @@ import Vapor
 final class PDREngine: Content{
     var k: Double
     var m: Double
-    var n: Double
     var ground_true: [TruePoint]
     
     
-    init(k: Double, m: Double, n: Double, ground_Truth: [TruePoint]) {
+    init(k: Double, m: Double, ground_Truth: [TruePoint]) {
         self.k = k
         self.m = m
-        self.n = n
         self.ground_true = ground_Truth.sorted(by: {$0.step < $1.step})
     }
     
@@ -93,7 +91,7 @@ final class PDREngine: Content{
             
             if  index > 1 && runnings[index].accz > runnings[index-1].accz && runnings[index].accz > runnings[index-2].accz && runnings[index].accz > runnings[index+1].accz && runnings[index].accz > runnings[index+2].accz {
                 
-                let length: Double = k * pow((acczMax-acczMin)*10.0/16384.0, 0.25+n)
+                let length: Double = k * pow((acczMax-acczMin)*10.0/16384.0, 0.25)
                 y += length * cos(theta * Double.pi/180.0)
                 x += length * sin(theta * Double.pi/180.0)
                 // calculate error
@@ -107,26 +105,23 @@ final class PDREngine: Content{
         return pdrSteps
     }
     
-    func train(runningSet: Array<[Running]>, dk: Double, dm: Double, dn: Double, eta: Double, epochs: Int) {
+    func train(runningSet: Array<[Running]>, dk: Double, dm: Double, eta: Double, epochs: Int) {
         var error: Double = calerror(of: runningSet)
         
         for _ in 0..<epochs {
             error = self.calerror(of: runningSet)
-            print("Epoch: \(epochs), E: \(error), k: \(k), m: \(m), n:\(n)")
+            print("Epoch: \(epochs), E: \(error), k: \(k), m: \(m)")
             // print("Epoch: \(epoch), E: \(error), k: \(k), m: \(m)")
             // error with k+dk, m
-            let ek = PDREngine(k: k+dk, m: m, n: n, ground_Truth: ground_true).calerror(of: runningSet)
+            let ek = PDREngine(k: k+dk, m: m,  ground_Truth: ground_true).calerror(of: runningSet)
             // error with k, m+dm
-            let em = PDREngine(k: k, m: m+dm, n: n, ground_Truth: ground_true).calerror(of: runningSet)
+            let em = PDREngine(k: k, m: m+dm, ground_Truth: ground_true).calerror(of: runningSet)
             // partial e over partial k & m
-            let en = PDREngine(k: k, m: m, n: n+dn, ground_Truth: ground_true).calerror(of: runningSet)
             let epk = (ek-error) / dk
             let epm = (em-error) / dm
-            let epn = (en-error) / dn
             
             k += -eta * epk
             m += -eta * epm
-            n += -eta * epn
         }
     }
 }
