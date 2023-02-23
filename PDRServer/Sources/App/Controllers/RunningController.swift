@@ -33,8 +33,7 @@ struct RunningController: RouteCollection {
             let k = 0.40
             let m = 0.08
             let dk = 0.01
-            let dm = 0.001
-            let dn = 0.0001
+            let dm = 0.002
             let eta = 0.000002
             let epochs = 200
             
@@ -61,6 +60,7 @@ struct RunningController: RouteCollection {
                     	.all()
 				}
             }
+//			print(ground_true)
             
             let pdrEngine = PDREngine(k: k, m: m, ground_Truth: ground_true)
             pdrEngine.train(runningSet: [runnings], dk: dk, dm: dm, eta: eta, epochs: epochs)
