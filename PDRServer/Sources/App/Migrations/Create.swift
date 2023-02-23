@@ -30,12 +30,23 @@ struct CreatePDRDateBase: AsyncMigration {
             .field("sampleBatch", .int, .required)
             .create()
         
+        try await database.schema("truepoints")
+            .id()
+            .field("x", .double, .required)
+            .field("y", .double, .required)
+            .field("step", .int, .required)
+            .field("magic", .int, .required)
+            .create()
+        
+        
         try await Position.load(on: database)
         try await Running.load(on: database)
+        try await TruePoint.load(on: database)
     }
 
     func revert(on database: Database) async throws {
         try await database.schema("runnings").delete()
         try await database.schema("positions").delete()
+        try await database.schema("truepoints").delete()
     }
 }

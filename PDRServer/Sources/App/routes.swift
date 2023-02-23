@@ -10,4 +10,5 @@ func routes(_ app: Application) throws {
 
     try app.register(collection: RunningController())
     try app.register(collection: PositionsController())
+    try app.register(collection: TruePointController())
 }
