@@ -39,7 +39,7 @@ struct RunningController: RouteCollection {
                 .all()
             
             var ground_true: [TruePoint] = []
-            if [27, 28, 29, 30, 31, 32].contains(batch) {
+            if [27, 28, 29, 30, 31, 32, 90, 77].contains(batch) {
                 ground_true = try await TruePoint.query(on: req.db)
                     .filter(\.$magic == 0)
                     .sort(\.$step)
