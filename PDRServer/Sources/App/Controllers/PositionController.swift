@@ -5,10 +5,7 @@ struct PositionsController: RouteCollection {
     func boot(routes: RoutesBuilder) throws {
         let subroute = routes.grouped("positions")
         subroute.get(use: index).description("get position dataset with a query of batch")
-        subroute.post(use: create).description("not yet verified")
-        // todos.group(":todoID") { todo in
-        //     todo.delete(use: delete)
-        // }
+        subroute.post(use: create).description("upload postions dataset")
     }
 
     func index(req: Request) async throws -> [Position] {
@@ -31,12 +28,5 @@ struct PositionsController: RouteCollection {
         return positions
     }
 
-    // func delete(req: Request) async throws -> HTTPStatus {
-    //     guard let todo = try await Todo.find(req.parameters.get("todoID"), on: req.db) else {
-    //         throw Abort(.notFound)
-    //     }
-    //     try await todo.delete(on: req.db)
-    //     return .noContent
-    // }
 }
 

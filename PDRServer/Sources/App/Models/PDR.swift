@@ -13,7 +13,6 @@ final class PDREngine: Content{
     var m: Double
     var ground_true: [TruePoint]
     
-    
     init(k: Double, m: Double, ground_Truth: [TruePoint]) {
         self.k = k
         self.m = m
@@ -27,12 +26,12 @@ final class PDREngine: Content{
         if percent <= 0 {
             realx = ground_true[0].x
             realy = ground_true[0].y
-        }else if percent >= 0{
+        }else if percent >= 1{
             realx = ground_true.last!.x
             realy = ground_true.last!.y
         }else{
             let index = Int(percent * Double(ground_true.count-1) )
-            let  linepercent = (percent - Double(index)/Double(ground_true.count-1) ) / Double(index)/Double(ground_true.count-1)
+            let  linepercent = (percent - Double(index)/Double(ground_true.count-1) ) / (Double(1)/Double(ground_true.count-1))
             realx = linepercent*ground_true[index+1].x + (1-linepercent)*ground_true[index].x
             realy = linepercent*ground_true[index+1].y + (1-linepercent)*ground_true[index].y
         }
@@ -108,14 +107,16 @@ final class PDREngine: Content{
     func train(runningSet: Array<[Running]>, dk: Double, dm: Double, eta: Double, epochs: Int) {
         var error: Double = calerror(of: runningSet)
         
-        for _ in 0..<epochs {
+        for epoch in 0..<epochs {
             error = self.calerror(of: runningSet)
-            print("Epoch: \(epochs), E: \(error), k: \(k), m: \(m)")
             // print("Epoch: \(epoch), E: \(error), k: \(k), m: \(m)")
+
             // error with k+dk, m
             let ek = PDREngine(k: k+dk, m: m,  ground_Truth: ground_true).calerror(of: runningSet)
+
             // error with k, m+dm
             let em = PDREngine(k: k, m: m+dm, ground_Truth: ground_true).calerror(of: runningSet)
+
             // partial e over partial k & m
             let epk = (ek-error) / dk
             let epm = (em-error) / dm
