@@ -1,0 +1,10 @@
+{
+    "name": "swift-nightly",
+    "image": "swiftlang/swift:nightly-focal",
+    "extensions": [
+      "sswg.swift-lang",
+    ],
+    "settings": {
+      "lldb.library": "/usr/lib/liblldb.so"
+    }
+}
