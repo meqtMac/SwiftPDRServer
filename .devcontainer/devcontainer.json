@@ -1,6 +1,6 @@
 {
     "name": "swift-nightly",
-    "image": "swiftlang/swift:focal",
+    "image": "swiftlang/swift:5.8-focal",
     "extensions": [
       "sswg.swift-lang",
     ],
