@@ -19,10 +19,17 @@ sudo apt-get install \
           zlib1g-dev
 
 # download swift package
-wget https://download.swift.org/swift-5.7.3-release/ubuntu2004/swift-5.7.3-RELEASE/swift-5.7.3-RELEASE-ubuntu20.04.tar.gz
-tar xzf swift-5.7.3-RELEASE-ubuntu20.04.tar.gz
-sudo mv swift-5.7.3-RELEASE-ubuntu20.04/ /usr/share/swift
+wget https://download.swift.org/swift-5.8-release/ubuntu2004/swift-5.8-RELEASE/swift-5.8-RELEASE-ubuntu20.04.tar.gz
+tar xzf swift-5.8-RELEASE-ubuntu20.04.tar.gz
+sudo mv swift-5.8-RELEASE-ubuntu20.04/ /usr/share/swift
 
 # add swift to path
-echo "export PATH=/usr/share/swift/usr/bin:$PATH" >> ~/.zshrc
-source ~/.zshrc
+if [ -n "$BASH_VERSION" ]; then
+  echo 'export PATH="/usr/share/swift/usr/bin:$PATH"' >> ~/.bashrc
+  source ~/.bashrc
+elif [ -n "$ZSH_VERSION" ]; then
+  echo 'export PATH="/usr/share/swift/usr/bin:$PATH"' >> ~/.zshrc
+  source ~/.zshrc
+else
+  echo "Warning: shell not supported. Please add /usr/share/swift/usr/bin to your PATH manually."
+fi
